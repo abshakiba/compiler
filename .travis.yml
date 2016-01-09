@@ -1,4 +1,5 @@
 language: boa
+install: ant deps
 script: ant test
 notifications:
   email: false
