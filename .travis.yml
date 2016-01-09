@@ -1,0 +1,4 @@
+language: boa
+script: ant test
+notifications:
+  email: false
