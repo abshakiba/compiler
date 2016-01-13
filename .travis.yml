@@ -1,4 +1,8 @@
 language: boa
 script: ant test
 notifications:
-  email: false
+     email: 
+	recipients:
+      	   - ankuraga@iastate.edu
+	on_success: change
+	on_failure: always
