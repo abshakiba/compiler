@@ -461,7 +461,7 @@ public class BoaAstIntrinsics {
 			} catch (final StackOverflowError e) {
 				System.err.println("STACK ERR: " + node.getName() + " -> " + BoaAstIntrinsics.type_name(node.getName()).trim());
 			}
-			*/
+			*/ 
 			return true;
 		}
 	}
