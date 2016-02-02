@@ -36,6 +36,7 @@ import boa.compiler.ast.Operand;
  * @author anthonyu
  * @author rdyer
  * @author rramu
+ * @author ankuraga
  */
 public class SymbolTable {
 	private static HashMap<String, Class<?>> aggregators;
@@ -88,6 +89,7 @@ public class SymbolTable {
 		idmap.put("float", new BoaFloat());
 		idmap.put("time", new BoaTime());
 		idmap.put("string", new BoaString());
+		idmap.put("Model", new BoaModel());
 
 		idmap.put("ASTRoot", new ASTRootProtoTuple());
 		idmap.put("Attachment", new AttachmentProtoTuple());
@@ -437,6 +439,8 @@ public class SymbolTable {
 		if (type instanceof BoaTuple)
 			for (final BoaType subType : ((BoaTuple) type).getTypes())
 				aggregators.add(this.getAggregator(name, (BoaScalar) subType));
+		else if (type instanceof BoaArray)
+				aggregators.add(this.getAggregator(name, ((BoaArray)type).getType()));
 		else
 			aggregators.add(this.getAggregator(name, (BoaScalar) type));
 
@@ -514,6 +518,7 @@ public class SymbolTable {
 			boa.aggregators.IntQuantileAggregator.class,
 			boa.aggregators.IntSumAggregator.class,
 			boa.aggregators.KurtosisAggregator.class,
+			boa.aggregators.LinearRegressionAggregator.class,
 			boa.aggregators.LogAggregator.class,
 			boa.aggregators.MaximumAggregator.class,
 			boa.aggregators.MedianAggregator.class,

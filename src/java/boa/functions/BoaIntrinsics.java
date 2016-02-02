@@ -21,16 +21,30 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
 
 import boa.types.Code.CodeRepository;
 import boa.types.Code.Revision;
 import boa.types.Diff.ChangedFile;
 import boa.types.Toplevel.Project;
 
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
+
+import weka.core.Attribute;
+import weka.core.FastVector;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.classifiers.Classifier;
+
 /**
  * Boa domain-specific functions.
  * 
  * @author rdyer
+ * @author ankuraga
  */
 public class BoaIntrinsics {
 	private final static String[] fixingRegex = {
@@ -41,6 +55,10 @@ public class BoaIntrinsics {
 	};
 
 	private final static List<Matcher> fixingMatchers = new ArrayList<Matcher>();
+
+	// FIXME Defining these variables as static to load model only once when it runs on multiple projects.  
+	private static boolean loadFlag = false;
+	private static Object unserializedObject = null;
 
 	static {
 		for (final String s : BoaIntrinsics.fixingRegex)
@@ -72,6 +90,77 @@ public class BoaIntrinsics {
 				return true;
 
 		return false;
+	}
+
+	/**
+	 * Given the model URL, deserialize the model and return Model type
+	 *
+	 * @param Take URL for the model
+	 * @return Model type after deserializing
+	 */
+	// TODO Take complete URL and then deserialize the model
+	// FIXME Returning Object as a type, this needs to be changed once we defined Model Type
+	@FunctionSpec(name = "load", returnType = "Model", formalParameters = {"string"})
+	public static Object load(final String URL) throws Exception {
+		try {
+			if(loadFlag == false) {
+				FSDataInputStream in = null;
+				final Configuration conf = new Configuration();
+				final FileSystem fileSystem = FileSystem.get(conf);
+				final Path path = new Path("hdfs://boa-njt" + URL);
+
+				if (in != null)
+					try { in.close(); } catch (final Exception e) { e.printStackTrace(); }
+
+				in = fileSystem.open(path);
+				int numBytes = 0;
+				final byte[] b = new byte[(int)fileSystem.getLength(path) + 1];
+				long length = 0;
+
+				in.read(b);
+
+				ByteArrayInputStream bin = new ByteArrayInputStream(b);
+				ObjectInputStream dataIn = new ObjectInputStream(bin);
+				unserializedObject = dataIn.readObject();
+				dataIn.close();
+				loadFlag = true;
+			}
+		} catch(Exception ex){
+		}
+		return unserializedObject;
+	}
+
+	/**
+	 * Classify instances for given ML model
+	 *
+	 * @param Take Model Type
+	 * @return Predicted value for a instance
+	 */
+	@FunctionSpec(name = "classify", returnType = "float", formalParameters = { "Model","array of float"})
+	public static double classify(final Object model, final double[] vector) throws Exception {
+		List<Attribute> attribute = new ArrayList<Attribute>();
+		int capacity = 1000000;
+		int size = vector.length;
+		int NumOfAttributes = size + 1;
+
+		FastVector fvAttributes = new FastVector(NumOfAttributes);
+		for(int i=0; i < NumOfAttributes; i++) {
+				attribute.add(new Attribute("Attribute" + i));
+				fvAttributes.addElement(attribute.get(i));
+		}
+
+		Instances testingSet = new Instances("Classifier", fvAttributes, capacity);
+		testingSet.setClassIndex(NumOfAttributes-1);
+
+		Instance instance = new Instance(NumOfAttributes);
+		for(int i=0; i<size; i++) {
+			 instance.setValue((Attribute)fvAttributes.elementAt(i), vector[i]);
+		}
+
+		Classifier classifier = (Classifier) model;
+		double predval = classifier.classifyInstance(instance);
+
+		return predval;
 	}
 
 	/**

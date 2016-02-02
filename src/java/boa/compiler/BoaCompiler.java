@@ -76,6 +76,7 @@ import boa.parser.BoaLexer;
  *
  * @author anthonyu
  * @author rdyer
+ * @author ankuraga
  */
 public class BoaCompiler {
 	
@@ -144,7 +145,6 @@ public class BoaCompiler {
 					try {
 						if (!parserErrorListener.hasError) {
 							new TypeCheckingVisitor().start(p, new SymbolTable());
-
 							final TaskClassifyingVisitor simpleVisitor = new TaskClassifyingVisitor();
 							simpleVisitor.start(p);
 
@@ -351,6 +351,7 @@ public class BoaCompiler {
 
 		final List<File> libJars = new ArrayList<File>();
 		libJars.add(new File(root, "boa-runtime.jar"));
+		libJars.add(new File(root, "weka.jar"));
 		if (cl.hasOption('l'))
 			for (final String s : Arrays.asList(cl.getOptionValues('l')))
 				libJars.add(new File(s));

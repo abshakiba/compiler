@@ -32,10 +32,12 @@ import boa.functions.BoaCasts;
  * 
  * @author anthonyu
  * @author rdyer
+ * @author ankuraga
  */
 public class EmitValue implements Writable {
 	private String[] data;
 	private String metadata;
+	private int vectorSize;
 
 	/**
 	 * Construct an EmitValue.
@@ -61,9 +63,38 @@ public class EmitValue implements Writable {
 	 * Construct an EmitValue.
 	 * 
 	 * @param data
+	 *            An array of {@link long} containing the data to be emitted
+	 * @param metadata
+	 *            A {@link String} containing the metadata to be emitted
+	 */
+	public EmitValue(final long[] data, final String metadata) {
+		final String[] strings = new String[data.length];
+
+		for (int i = 0; i < data.length; i++)
+			strings[i] = String.valueOf(data[i]);
+
+		this.data = strings;
+		this.metadata = metadata;
+		this.vectorSize = data.length;
+	}
+
+	/**
+	 * Construct an EmitValue.
+	 *
+	 * @param data
 	 *            An array of {@link String} containing the data to be emitted
 	 */
 	public EmitValue(final String[] data) {
+		this(data, null);
+	}
+
+	/**
+	 * Construct an EmitValue.
+	 *
+	 * @param data
+	 *            An array of {@link long} containing the data to be emitted
+	 */
+	public EmitValue(final long[] data) {
 		this(data, null);
 	}
 
@@ -291,6 +322,13 @@ public class EmitValue implements Writable {
 	 */
 	public void setMetadata(final String metadata) {
 		this.metadata = metadata;
+	}
+
+	/**
+	 * @return the vector size
+	 */
+	public int getSize() {
+		return this.vectorSize;
 	}
 
 	@Override

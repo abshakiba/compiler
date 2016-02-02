@@ -34,6 +34,7 @@ import boa.types.*;
  * 
  * @author anthonyu
  * @author rdyer
+ * @author ankuraga
  */
 public class TypeCheckingVisitor extends AbstractVisitorNoReturn<SymbolTable> {
 	/**
@@ -258,7 +259,6 @@ public class TypeCheckingVisitor extends AbstractVisitorNoReturn<SymbolTable> {
 
 		if (n.hasRhs()) {
 			n.getRhs().accept(this, env);
-
 			if (!n.getRhs().type.compares(n.type))
 				throw new TypeCheckException(n.getRhs(), "incompatible types for comparison: required '" + n.type + "', found '" + n.getRhs().type + "'");
 
@@ -293,8 +293,14 @@ public class TypeCheckingVisitor extends AbstractVisitorNoReturn<SymbolTable> {
 
 		if (n.getPairsSize() > 0)
 			n.type = checkPairs(n.getPairs(), env);
-		else if (n.getExprsSize() > 0)
-			n.type = new BoaArray(check(n.getExprs(), env).get(0));
+		else if (n.getExprsSize() > 0) {
+			List<BoaType> types = check(n.getExprs(), env);
+
+			if(!(checkTupleArray(types) == true))
+				n.type = new BoaArray(types.get(0));
+			else
+				n.type = new BoaTuple(types);
+		}
 		else
 			n.type = new BoaMap(new BoaAny(), new BoaAny());
 	}
@@ -373,9 +379,7 @@ public class TypeCheckingVisitor extends AbstractVisitorNoReturn<SymbolTable> {
 				} else {
 					node.accept(this, env);
 					n.getOperand().env = env;
-
 					final List<BoaType> formalParameters = this.check((Call) node, env);
-
 					final FunctionFindingVisitor v = new FunctionFindingVisitor(formalParameters);
 					try {
 						v.start((Identifier)n.getOperand(), env);
@@ -391,7 +395,6 @@ public class TypeCheckingVisitor extends AbstractVisitorNoReturn<SymbolTable> {
 		} else {
 			n.getOperand().accept(this, env);
 			type = n.getOperand().type;
-
 			if (type instanceof BoaFunction && n.getOperand() instanceof Identifier)
 				throw new TypeCheckException(n, "expected a call to function '" + n.getOperand() + "'");
 		}
@@ -513,10 +516,8 @@ public class TypeCheckingVisitor extends AbstractVisitorNoReturn<SymbolTable> {
 	@Override
 	public void visit(final AssignmentStatement n, final SymbolTable env) {
 		n.env = env;
-
 		n.getLhs().accept(this, env);
 		n.getRhs().accept(this, env);
-
 		if (!(n.getLhs().type instanceof BoaArray && n.getRhs().type instanceof BoaTuple))
 			if (!n.getLhs().type.assigns(n.getRhs().type))
 				throw new TypeCheckException(n.getRhs(), "incompatible types for assignment: required '" + n.getLhs().type + "', found '" + n.getRhs().type + "'");
@@ -826,7 +827,6 @@ public class TypeCheckingVisitor extends AbstractVisitorNoReturn<SymbolTable> {
 		if (n.hasInitializer()) {
 			n.getInitializer().accept(this, env);
 			rhs = n.getInitializer().type;
-
 			final Factor f = n.getInitializer().getLhs().getLhs().getLhs().getLhs().getLhs();
 			if (f.getOperand() instanceof Identifier && f.getOpsSize() == 0 && env.hasType(((Identifier)f.getOperand()).getToken()))
 				throw new TypeCheckException(n.getInitializer(), "type '" + f.getOperand().type + "' is not a value and can not be assigned");
@@ -1146,7 +1146,6 @@ public class TypeCheckingVisitor extends AbstractVisitorNoReturn<SymbolTable> {
 
 		n.getType().accept(this, env);
 		final BoaType type = n.getType().type;
-
 		final AggregatorSpec annotation;
 		try {
 			annotation = env.getAggregators(n.getId().getToken(), type).get(0).getAnnotation(AggregatorSpec.class);
@@ -1204,7 +1203,10 @@ public class TypeCheckingVisitor extends AbstractVisitorNoReturn<SymbolTable> {
 			types.add(c.type);
 		}
 
-		n.type = new BoaTuple(types);
+		if(checkTupleArray(types) == true)
+			n.type = new BoaTuple(types);
+		else
+			n.type = new BoaArray(types.get(0));
 	}
 
 	/** {@inheritDoc} */
@@ -1226,7 +1228,6 @@ public class TypeCheckingVisitor extends AbstractVisitorNoReturn<SymbolTable> {
 
 		for (final Expression e : el) {
 			e.accept(this, env);
-
 			// special case of a function call, use its return type instead of function type
 			if (e.type instanceof BoaFunction) {
 				callFinder.start(e);
@@ -1240,6 +1241,22 @@ public class TypeCheckingVisitor extends AbstractVisitorNoReturn<SymbolTable> {
 		}
 
 		return types;
+	}
+
+	protected boolean checkTupleArray(final List<BoaType> types) {
+		BoaType type;
+		boolean tuple = false;
+
+		if(types == null)
+			return false;
+
+		type = types.get(0);
+		for (int i = 1; i < types.size(); i++) {
+			if((!(types.get(i).toBoxedJavaType() == type.toBoxedJavaType())) && tuple==false){
+				tuple = true;
+			}
+		}
+		return tuple;
 	}
 
 	protected BoaType checkPairs(final List<Pair> pl, final SymbolTable env) {

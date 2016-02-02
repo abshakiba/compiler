@@ -32,12 +32,12 @@ import boa.aggregators.FinishedException;
 import boa.io.EmitKey;
 import boa.io.EmitValue;
 
-
 /**
  * A {@link Reducer} that reduces the outputs for a single {@link EmitKey}.
  * 
  * @author anthonyu
  * @author rdyer
+ * @author ankuraga
  */
 public abstract class BoaReducer extends Reducer<EmitKey, EmitValue, Text, NullWritable> implements Configurable {
 	/**
@@ -80,13 +80,17 @@ public abstract class BoaReducer extends Reducer<EmitKey, EmitValue, Text, NullW
 	protected void reduce(final EmitKey key, final Iterable<EmitValue> values, final Context context) throws IOException, InterruptedException {
 		// get the aggregator named by the emit key
 		final Aggregator a = this.aggregators.get(key.getKey());
-
+		boolean setVectorSize = true;
 		a.setCombining(false);
 		a.start(key);
 		a.setContext(context);
 
 		for (final EmitValue value : values)
 			try {
+				if(setVectorSize && value.getData().length > 1) {
+					a.setVectorSize(value.getData().length);
+					setVectorSize = false;
+				}
 				for (final String s : value.getData())
 					a.aggregate(s, value.getMetadata());
 			} catch (final FinishedException e) {

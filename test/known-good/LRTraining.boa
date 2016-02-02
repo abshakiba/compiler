@@ -1,0 +1,37 @@
+# Train the model using Linear Regression on number of avg. word count for first half of the revisions and on second half of the revisions 
+
+p: Project = input;
+word: array of string;
+size := 0; 
+firstHalf := 0;
+secondHalf := 0;
+avgfirstHalf := 0;
+avgsecondHalf := 0;
+
+trainingModel : output linearRegression("-S 2") of {float,float};
+
+visit(p, visitor {
+	before repo: CodeRepository -> {
+	  size = len(repo.revisions);
+	  if((yearof(p.created_date)) > 2015 && monthof(p.created_date) < 5){
+		foreach (i: int; repo.revisions[i]) {
+			if(size/2 > i)
+				{
+				 word = splitall(repo.revisions[i].log, " ");
+			     secondHalf = secondHalf + len(word);	
+				}
+			else {
+			     word = splitall(repo.revisions[i].log, " ");
+			     firstHalf = firstHalf + len(word);
+			     }
+		} 
+		if(size!=0){ 
+			avgfirstHalf = (firstHalf/size)*2;
+	        avgsecondHalf = (secondHalf/size)*2;
+			trainingModel << {avgfirstHalf,avgsecondHalf};
+		}
+		firstHalf = 0;
+        secondHalf = 0;
+	  }
+	}	
+});
