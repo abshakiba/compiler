@@ -17,23 +17,14 @@
 package boa.aggregators;
 
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
-
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Reducer.Context;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.FileOutputFormat;
 
 import boa.functions.BoaCasts;
 import boa.io.EmitKey;
 import boa.io.EmitValue;
+
+import org.apache.hadoop.mapreduce.Reducer.Context;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.NullWritable;
 
 /**
  * The base class for all Boa aggregators.
@@ -49,7 +40,7 @@ public abstract class Aggregator {
 	private EmitKey key;
 	private boolean combining;
 	private String optionArg;
-	private int vectorSize;
+	private int vectorSize = 1;
 
 	/**
 	 * Construct an Aggregator.
@@ -191,41 +182,5 @@ public abstract class Aggregator {
 
 	public void setVectorSize(int vectorSize) {
 		this.vectorSize = vectorSize;
-	}
-
-	public void saveModel(Object model) {
-		FSDataOutputStream out = null;
-		FileSystem fileSystem = null;
-		Path filePath = null;
-		try {
-			JobContext context = (JobContext) getContext();
-			Configuration configuration = context.getConfiguration();
-			int boaJobId = configuration.getInt("boa.hadoop.jobid", 0);
-			JobConf job = new JobConf(configuration);
-			Path outputPath = FileOutputFormat.getOutputPath(job);
-			fileSystem = outputPath.getFileSystem(context.getConfiguration());
-
-			fileSystem.mkdirs(new Path("/boa", new Path("" + boaJobId)));
-			filePath = new Path("/boa", new Path("" + boaJobId, new Path(("" + getKey()).split("\\[")[0] + "ML.model")));
-
-			if (fileSystem.exists(filePath))
-				return;
-
-			out = fileSystem.create(filePath);
-			ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream();
-			ObjectOutputStream objectOut = new ObjectOutputStream(byteOutStream);
-			objectOut.writeObject(model);
-			objectOut.close();
-
-			byte[] serializedObject= byteOutStream.toByteArray();
-			out.write(serializedObject, 0, serializedObject.length);
-
-			this.collect(filePath.toString());
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try { if (out != null) out.close(); } catch (final Exception e) { e.printStackTrace(); }
-		}
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014, Anthony Urso, Hridesh Rajan, Robert Dyer, 
+ * Copyright 2014, Hridesh Rajan, Robert Dyer,
  *                 and Iowa State University of Science and Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,7 @@ import weka.core.Utils;
  * @author ankuraga
  */
 @AggregatorSpec(name = "linearRegression", formalParameters = { "string" })
-public class LinearRegressionAggregator extends Aggregator {
+public class LinearRegressionAggregator extends MLAggregator {
 	private Map<String, List<Double>> vectors = new HashMap<String, List<Double>>();
 	private ArrayList<Double> vector = new ArrayList<Double>();
 	private String[] options;
@@ -72,14 +72,13 @@ public class LinearRegressionAggregator extends Aggregator {
 		int NumOfAttributes = this.getVectorSize();
 		List<Attribute> attribute = new ArrayList<Attribute>();
 		FastVector fvAttributes = new FastVector(NumOfAttributes);
-		int capacity = 1000000;
 
 		for(int i=0; i < NumOfAttributes; i++) {
 			 attribute.add(new Attribute("Attribute" + i));
 			 fvAttributes.addElement(attribute.get(i));
 		}
 
-		Instances trainingSet = new Instances("LinearRegression", fvAttributes, capacity);
+		Instances trainingSet = new Instances("LinearRegression", fvAttributes, 1);
 		trainingSet.setClassIndex(NumOfAttributes-1);
 
 		for(List<Double> vector : this.vectors.values()) {
