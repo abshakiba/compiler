@@ -56,10 +56,6 @@ public class BoaIntrinsics {
 
 	private final static List<Matcher> fixingMatchers = new ArrayList<Matcher>();
 
-	// FIXME Defining these variables as static to load model only once when it runs on multiple projects.  
-	private static boolean loadFlag = false;
-	private static Object unserializedObject = null;
-
 	static {
 		for (final String s : BoaIntrinsics.fixingRegex)
 			fixingMatchers.add(Pattern.compile(s).matcher(""));
@@ -102,30 +98,29 @@ public class BoaIntrinsics {
 	// FIXME Returning Object as a type, this needs to be changed once we defined Model Type
 	@FunctionSpec(name = "load", returnType = "Model", formalParameters = {"string"})
 	public static Object load(final String URL) throws Exception {
+		Object unserializedObject = null;
+		FSDataInputStream in = null;
 		try {
-			if(loadFlag == false) {
-				FSDataInputStream in = null;
-				final Configuration conf = new Configuration();
-				final FileSystem fileSystem = FileSystem.get(conf);
-				final Path path = new Path("hdfs://boa-njt" + URL);
+			final Configuration conf = new Configuration();
+			final FileSystem fileSystem = FileSystem.get(conf);
+			final Path path = new Path("hdfs://boa-njt" + URL);
 
-				if (in != null)
-					try { in.close(); } catch (final Exception e) { e.printStackTrace(); }
+			if (in != null)
+				try { in.close(); } catch (final Exception e) { e.printStackTrace(); }
 
-				in = fileSystem.open(path);
-				int numBytes = 0;
-				final byte[] b = new byte[(int)fileSystem.getLength(path) + 1];
-				long length = 0;
+			in = fileSystem.open(path);
+			int numBytes = 0;
+			final byte[] b = new byte[(int)fileSystem.getLength(path) + 1];
+			long length = 0;
 
-				in.read(b);
+			in.read(b);
 
-				ByteArrayInputStream bin = new ByteArrayInputStream(b);
-				ObjectInputStream dataIn = new ObjectInputStream(bin);
-				unserializedObject = dataIn.readObject();
-				dataIn.close();
-				loadFlag = true;
-			}
-		} catch(Exception ex){
+			ByteArrayInputStream bin = new ByteArrayInputStream(b);
+			ObjectInputStream dataIn = new ObjectInputStream(bin);
+			unserializedObject = dataIn.readObject();
+			dataIn.close();
+		}
+		catch(Exception ex){
 		}
 		return unserializedObject;
 	}
@@ -139,7 +134,6 @@ public class BoaIntrinsics {
 	@FunctionSpec(name = "classify", returnType = "float", formalParameters = { "Model","array of float"})
 	public static double classify(final Object model, final double[] vector) throws Exception {
 		List<Attribute> attribute = new ArrayList<Attribute>();
-		int capacity = 1000000;
 		int size = vector.length;
 		int NumOfAttributes = size + 1;
 
@@ -149,7 +143,7 @@ public class BoaIntrinsics {
 				fvAttributes.addElement(attribute.get(i));
 		}
 
-		Instances testingSet = new Instances("Classifier", fvAttributes, capacity);
+		Instances testingSet = new Instances("Classifier", fvAttributes, 1);
 		testingSet.setClassIndex(NumOfAttributes-1);
 
 		Instance instance = new Instance(NumOfAttributes);
