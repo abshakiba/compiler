@@ -39,7 +39,7 @@ import weka.core.Utils;
  *
  */
 @AggregatorSpec(name = "RandomForest", formalParameters = { "string" })
-public class DecisionTreeAggregator extends MLAggregator {
+public class RandomForestAggregator extends MLAggregator {
 	private Map<String, List<Double>> vectors = new HashMap<String, List<Double>>();
 	private ArrayList<Double> vector = new ArrayList<Double>();
 	private String[] options;
@@ -47,7 +47,7 @@ public class DecisionTreeAggregator extends MLAggregator {
 	private int inc = 0;
 	private RandomForest model;
 
-	public DecisionTreeAggregator(final String s) {
+	public RandomForestAggregator(final String s) {
 		super(s);
 		try {
 			options = Utils.splitOptions(s);

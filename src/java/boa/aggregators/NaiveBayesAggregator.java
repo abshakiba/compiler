@@ -55,7 +55,6 @@ public class NaiveBayesAggregator extends MLAggregator {
 		}
 	}
 
-	// TODO: What about metadata?
 	public void aggregate(final String data, final String metadata) throws IOException, InterruptedException {
 		if(this.count != this.getVectorSize()) {
 			this.vector.add(Double.parseDouble(data));
