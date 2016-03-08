@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import weka.classifiers.trees.J48;
+import weka.classifiers.trees.RandomForest;
 import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
@@ -30,21 +31,21 @@ import weka.core.Instances;
 import weka.core.Utils;
 
 /**
- * A Boa aggregator for training the model using Decision Tree.
+ * A Boa aggregator for training the model using Random Forest.
  * 
  * @author ankuraga
  *
  * Modified by @abshakiba
  *
  */
-@AggregatorSpec(name = "DecisionTree", formalParameters = { "string" })
+@AggregatorSpec(name = "RandomForest", formalParameters = { "string" })
 public class DecisionTreeAggregator extends MLAggregator {
 	private Map<String, List<Double>> vectors = new HashMap<String, List<Double>>();
 	private ArrayList<Double> vector = new ArrayList<Double>();
 	private String[] options;
 	private int count = 0;
 	private int inc = 0;
-	private J48 model;
+	private RandomForest model;
 
 	public DecisionTreeAggregator(final String s) {
 		super(s);
@@ -82,7 +83,7 @@ public class DecisionTreeAggregator extends MLAggregator {
 			 fvAttributes.addElement(attributes.get(i));
 		}
 
-		Instances trainingSet = new Instances("DecisionTree", fvAttributes, 1);
+		Instances trainingSet = new Instances("RandomForest", fvAttributes, 1);
 		trainingSet.setClassIndex(NumOfAttributes-1);
 
 		for(List<Double> vector : this.vectors.values()) {
@@ -94,7 +95,7 @@ public class DecisionTreeAggregator extends MLAggregator {
 		}
 
 		try {
-			this.model = new J48();
+			this.model = new RandomForest();
 			this.model.setOptions(options);
 			this.model.buildClassifier(trainingSet);
 		} catch(Exception ex) {

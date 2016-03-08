@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import weka.classifiers.trees.J48;
+import weka.classifiers.bayes.NaiveBayes;
 import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
@@ -30,7 +30,7 @@ import weka.core.Instances;
 import weka.core.Utils;
 
 /**
- * A Boa aggregator for training the model using Linear Regression.
+ * A Boa aggregator for training the model using Naive Bayes.
  * 
  * @author ankuraga
  *
@@ -82,7 +82,7 @@ public class NaiveBayesAggregator extends MLAggregator {
 			 fvAttributes.addElement(attributes.get(i));
 		}
 
-		Instances trainingSet = new Instances("LinearRegression", fvAttributes, 1);
+		Instances trainingSet = new Instances("NaiveBayes", fvAttributes, 1);
 		trainingSet.setClassIndex(NumOfAttributes-1);
 
 		for(List<Double> vector : this.vectors.values()) {
