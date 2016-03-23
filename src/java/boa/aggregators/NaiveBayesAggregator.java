@@ -37,19 +37,30 @@ import weka.core.Utils;
  * Modified by @abshakiba
  *
  */
-@AggregatorSpec(name = "NaiveBayes", formalParameters = { "string" })
+@AggregatorSpec(name = "NaiveBayes", formalParameters = { "string", "string" })
 public class NaiveBayesAggregator extends MLAggregator {
 	private Map<String, List<Double>> vectors = new HashMap<String, List<Double>>();
 	private ArrayList<Double> vector = new ArrayList<Double>();
 	private String[] options;
+	private String[] attributeList;
 	private int count = 0;
 	private int inc = 0;
 	private NaiveBayes model;
 
-	public NaiveBayesAggregator(final String s) {
+	FastVector fvAttributes = new FastVector();
+
+	// 1, "", [], ...
+
+	public NaiveBayesAggregator(final String s, final String a) {
 		super(s);
 		try {
 			options = Utils.splitOptions(s);
+			attributeList = Utils.splitOptions(a);
+			int NumOfAttributes = attributeList.length;
+
+			getAttributes(s, fvAttributes);
+
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -69,17 +80,10 @@ public class NaiveBayesAggregator extends MLAggregator {
 		}
 	}
 
+
 	/** {@inheritDoc} */
 	@Override
 	public void finish() throws IOException, InterruptedException {
-		int NumOfAttributes = this.getVectorSize();
-		List<Attribute> attributes = new ArrayList<Attribute>();
-		FastVector fvAttributes = new FastVector(NumOfAttributes);
-
-		for(int i=0; i < NumOfAttributes; i++) {
-			 attributes.add(new Attribute("Attribute" + i));
-			 fvAttributes.addElement(attributes.get(i));
-		}
 
 		Instances trainingSet = new Instances("NaiveBayes", fvAttributes, 1);
 		trainingSet.setClassIndex(NumOfAttributes-1);
@@ -101,4 +105,5 @@ public class NaiveBayesAggregator extends MLAggregator {
 
 		this.saveModel(this.model);
 	}
+
 }
