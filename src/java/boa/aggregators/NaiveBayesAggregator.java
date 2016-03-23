@@ -39,7 +39,7 @@ import weka.core.Utils;
  */
 @AggregatorSpec(name = "NaiveBayes", formalParameters = { "string", "string" })
 public class NaiveBayesAggregator extends MLAggregator {
-	private Map<String, List<Double>> vectors = new HashMap<String, List<Double>>();
+	private Map<String, List<String>> vectors = new HashMap<String, List<String>>();
 	private ArrayList<Double> vector = new ArrayList<Double>();
 	private String[] options;
 	private String[] attributeList;
@@ -55,10 +55,6 @@ public class NaiveBayesAggregator extends MLAggregator {
 		super(s);
 		try {
 			options = Utils.splitOptions(s);
-			attributeList = Utils.splitOptions(a);
-			int NumOfAttributes = attributeList.length;
-
-			getAttributes(s, fvAttributes);
 
 
 		} catch (Exception e) {
@@ -67,7 +63,17 @@ public class NaiveBayesAggregator extends MLAggregator {
 	}
 
 	public void aggregate(final String data, final String metadata) throws IOException, InterruptedException {
-		if(this.count != this.getVectorSize()) {
+
+		if(this.count != this.fvAttributes.length) {
+			try{
+				if(Integer.parseInt(data.substring(0,1)) >=0 && Integer.parseInt(token.substring(0,1)) <=9) {
+					this.vector.add(Double.parseDouble(data));
+				}
+
+				}catch(Exception e){
+
+			}
+
 			this.vector.add(Double.parseDouble(data));
 			this.count++;
 		}

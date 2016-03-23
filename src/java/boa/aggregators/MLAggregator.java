@@ -74,6 +74,42 @@ abstract class MLAggregator extends Aggregator {
 			try { if (out != null) out.close(); } catch (final Exception e) { e.printStackTrace(); }
 		}
 	}
+
+	public void getAttributes(String a, FastVector fv){
+
+		boolean inNominal = false;
+		String[] tokens = input.split(",");
+		FastVector tmpFV = new FastVector();
+
+		for(String token : tokens){
+			if(token.substring(0,1).equals("\"")){
+				fv.addElement(new Attribute("String" + token))
+			}
+			if(token.substring(0,1).equals("[") || inNominal){
+				inNominal = true;
+				list = Arrays.copyOf(list, list.length + 1);
+				if(token.substring(token.length()-1).equals("]")){
+					inNominal = false;
+					tmpFV.addElement(new Attribute(token.substring(0,token.length()-1)))
+					fv.addElement(tmpFV);
+					tmpFV = new FastVector();
+				}else{
+					if(token.substring(0,1).equals("[")){
+						tmpFV.addElement(new Attribute(token.substring(1)));
+					}else{
+						tmpFV.addElement(new Attribute(token)));
+					}
+				}
+			}
+			try{
+				if(Integer.parseInt(token.substring(0,1)) >=0 && Integer.parseInt(token.substring(0,1)) <=9){
+					fv.addElement(new Attribute("Numeric" + token));
+				}
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+	}
 	
 	/** {@inheritDoc} */
 	@Override
