@@ -55,6 +55,7 @@ public class NaiveBayesAggregator extends MLAggregator {
 		super(s);
 		try {
 			options = Utils.splitOptions(s);
+			getAttributes(a, fvAttributes);
 
 
 		} catch (Exception e) {
